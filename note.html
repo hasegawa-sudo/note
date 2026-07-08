@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>アナログノート — 手書き勉強ノート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Yomogi&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="note.css">
+</head>
+<body>
+
+<!-- ============ ホーム画面 ============ -->
+<div class="screen active" id="home">
+  <div class="home-header">
+    <div class="home-eyebrow">STUDY NOTEBOOK</div>
+    <h1 class="home-title">アナログノート</h1>
+  </div>
+
+  <button class="board-strip" id="boardStrip" aria-label="黒板を開く">
+    <canvas id="boardThumb"></canvas>
+    <span class="label">黒板メモ</span>
+    <span class="hint">タップで開く ▾</span>
+  </button>
+
+  <div class="note-scroll">
+    <div class="note-grid" id="noteGrid"></div>
+  </div>
+
+  <button class="fab" id="fabNew"><span class="plus">＋</span>新しいノート</button>
+
+  <div class="sheet-bg" id="sheetBg"></div>
+  <div class="sheet" id="tplSheet">
+    <h3>ノートの種類をえらぶ</h3>
+    <div class="tpl-grid" id="tplGrid"></div>
+  </div>
+
+  <!-- 表紙(カバー)編集シート -->
+  <div class="sheet-bg" id="coverBg"></div>
+  <div class="sheet" id="coverSheet">
+    <h3>ノートの表紙をえらぶ</h3>
+    <div class="cover-preview"><canvas id="coverPrev" width="300" height="400"></canvas></div>
+    <div class="cover-mode" id="coverMode">
+      <button class="cm-btn" data-mode="design">柄の表紙</button>
+      <button class="cm-btn" data-mode="page1">1ページ目を表紙に</button>
+    </div>
+    <div id="coverDesignOpts">
+      <div class="cover-sec-label">柄</div>
+      <div class="cover-patterns" id="coverPatterns"></div>
+      <div class="cover-sec-label">色</div>
+      <select id="coverPalette" class="mini-select" style="margin-bottom:10px"></select>
+      <div class="cover-colors" id="coverColors"></div>
+    </div>
+    <button class="cover-apply" id="coverApply">この表紙にする</button>
+  </div>
+</div>
+
+<!-- ============ 編集画面 ============ -->
+<div class="screen" id="editor">
+  <div class="ed-tophead">
+    <button class="icon-btn" id="btnBack" aria-label="ホームへ戻る">←</button>
+    <input class="ed-title" id="edTitle" placeholder="ページ名" maxlength="40">
+    <button class="icon-btn" id="btnUndo" aria-label="元に戻す">↩</button>
+    <button class="icon-btn" id="btnRedo" aria-label="やり直す">↪</button>
+    <div class="pager" id="pager">
+      <button id="pagePrev" aria-label="前のページ">‹</button>
+      <button class="pg-label" id="pageLabel" aria-label="ページ一覧">1 / 1</button>
+      <button id="pageNext" class="is-add" aria-label="次のページ / 追加">＋</button>
+    </div>
+    <button class="board-btn" id="boardTab" aria-label="黒板を引き出す">
+      黒板 ▾ <span class="tmr" id="tabTimer" hidden>00:00</span>
+    </button>
+  </div>
+  <div class="canvas-wrap" id="canvasWrap">
+    <div class="canvas-stack" id="canvasStack">
+      <canvas id="bgCanvas"></canvas>
+      <canvas id="midCanvas"></canvas>
+      <canvas id="inkCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="ed-header">
+    <button class="icon-btn" id="btnLasso" aria-label="投げ縄選択">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" aria-hidden="true">
+        <path d="M12 4.2C7 4.2 3.2 6.9 3.2 10.3c0 2.6 2.4 4.9 6 5.8"
+          stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+          stroke-dasharray="0.5 3.4"/>
+        <path d="M20.8 10.3c0 2.3-1.9 4.3-4.7 5.4"
+          stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+          stroke-dasharray="0.5 3.4"/>
+        <path d="M9.2 16.1c-1 .5-1.6 1.2-1.6 2 0 1.4 1.7 2.2 2.6 1.1.5-.6.3-1.6-.5-2.4"
+          stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="16" cy="15.5" r="1" fill="currentColor"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="btnText" aria-label="テキスト">Ａ</button>
+    <button class="icon-btn" id="btnStamp" aria-label="スタンプ">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+        <path d="M9.3 3.6c-.9.5-1.4 1.6-1.1 2.7l.9 3.1c.2.8-.3 1.5-1.1 1.5H5.4c-1.2 0-2.1 1-2.1 2.1v1.3c0 .8.6 1.4 1.4 1.4h14.6c.8 0 1.4-.6 1.4-1.4v-1.3c0-1.2-1-2.1-2.1-2.1h-2.5c-.8 0-1.3-.7-1.1-1.5l.9-3.1c.4-1.4-.6-2.8-2-2.9-.9 0-1.7.5-2 1.3"
+          stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M4.6 18.8h14.8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+        <path d="M6.5 21h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="btnPhoto" aria-label="写真">🖼</button>
+    <button class="icon-btn" id="btnSticky" aria-label="付箋">
+      <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
+        <rect x="7.5" y="3.2" width="9" height="4.2" rx="1.2" fill="#FFC24D"/>
+        <rect x="5.5" y="6.6" width="13" height="13.5" rx="1.6" fill="#FFE38A"/>
+        <rect x="5.5" y="6.6" width="13" height="2" rx="1" fill="#000" opacity="0.06"/>
+        <path d="M8.4 12h7.2M8.4 15h5" stroke="#B58A2E" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <input type="file" id="photoInput" accept="image/*" hidden>
+
+  <div class="pagelist-bg" id="pagelistBg"></div>
+  <div class="pagelist" id="pagelist">
+    <h3>ページ <button id="pageDelete">現在のページを削除</button></h3>
+    <div class="pl-grid" id="plGrid"></div>
+  </div>
+
+  <!-- 左手デバイス風パレット -->
+  <div class="palette" role="toolbar" aria-label="ツールパレット">
+    <button class="pal-btn on" data-tool="pen" id="palPen">✒️<small>ペン</small></button>
+    <button class="pal-btn" data-tool="eraser">◻️<small>消しゴム</small></button>
+    <button class="pal-btn" data-tool="marker" id="palMarker">🖍<small>マーカー</small></button>
+    <button class="pal-btn" data-tool="ruler" id="palRuler">📏<small>定規</small></button>
+  </div>
+
+  <!-- ペン/マーカー設定ミニウィンドウ(パレット右横) -->
+  <div class="tool-mini" id="toolMini">
+    <div class="mini-title" id="miniTitle">ペン</div>
+    <div class="mini-row" id="miniKindRow">
+      <div class="mini-label">ペン先</div>
+      <div class="seg" id="miniKind">
+        <button data-kind="ball" class="on">ボールペン</button>
+        <button data-kind="pencil">えんぴつ</button>
+        <button data-kind="fountain">万年筆</button>
+        <button data-kind="brush">筆ペン</button>
+        <button data-kind="neon">ネオン</button>
+      </div>
+    </div>
+    <div class="mini-row">
+      <div class="mini-label">太さ <span id="miniWidthVal"></span></div>
+      <input type="range" id="miniWidth" min="1" max="24" step="0.5">
+      <div class="width-demo"><i id="miniWidthDemo"></i></div>
+    </div>
+    <div class="mini-row">
+      <div class="mini-label">配色パレット</div>
+      <select id="miniPalette" class="mini-select"></select>
+    </div>
+    <div class="mini-row">
+      <div class="mini-label">色</div>
+      <div class="swatches" id="miniColors"></div>
+    </div>
+  </div>
+
+  <!-- 付箋 -->
+  <div class="popover" id="stickyPop">
+    <div class="pop-label">付箋の色をえらんで貼る</div>
+    <div class="sticky-pop" id="stickyColors"></div>
+  </div>
+
+  <!-- スタンプ -->
+  <div class="popover" id="stampPop">
+    <div class="pop-label">スタンプ（タップで中央に置く）</div>
+    <div class="stamp-grid" id="stampGrid"></div>
+  </div>
+
+  <!-- テキスト入力 -->
+  <div class="text-entry" id="textEntry">
+    <textarea id="textInput" placeholder="テキストを入力"></textarea>
+    <div class="row">
+      <select id="fontSel">
+        <option value="system-ui">ゴシック</option>
+        <option value="'Hiragino Mincho ProN', serif">明朝</option>
+        <option value="'Zen Maru Gothic', sans-serif">丸文字</option>
+        <option value="'Yomogi', cursive">手書き風</option>
+      </select>
+    </div>
+    <div class="te-opt-label">文字色</div>
+    <div class="swatches" id="textColors"></div>
+    <div class="row te-optrow">
+      <div class="stepper"><span>大きさ</span>
+        <button id="txtSizeMinus" aria-label="小さく">−</button>
+        <b id="txtSizeVal">24</b>
+        <button id="txtSizePlus" aria-label="大きく">＋</button>
+      </div>
+      <button class="te-bold" id="txtBold" aria-pressed="false">太字</button>
+    </div>
+    <div class="row">
+      <div class="seg te-seg" id="txtOrient">
+        <button data-o="h" class="on">横書き</button>
+        <button data-o="v">縦書き</button>
+      </div>
+    </div>
+    <div class="row"><button class="ok" id="textOk" style="flex:1">置く</button></div>
+  </div>
+
+  <div class="text-entry" id="tableEntry">
+    <div class="te-title">表のサイズ</div>
+    <div class="row te-steppers">
+      <div class="stepper"><span>行</span>
+        <button id="rowMinus">−</button><b id="rowVal">3</b><button id="rowPlus">＋</button>
+      </div>
+      <div class="stepper"><span>列</span>
+        <button id="colMinus">−</button><b id="colVal">3</b><button id="colPlus">＋</button>
+      </div>
+    </div>
+    <div class="row"><button class="ok" id="tableOk" style="flex:1">適用</button></div>
+  </div>
+
+  <div class="text-entry" id="blindEntry">
+    <div class="te-title">ブラインドシール</div>
+    <div class="mini-label" style="margin-bottom:6px">配色パレット</div>
+    <select id="blindPalette" class="mini-select" style="margin-bottom:10px"></select>
+    <div class="mini-label" style="margin-bottom:6px">色</div>
+    <div class="swatches" id="blindColors"></div>
+    <div class="mini-label" style="margin:10px 0 6px">模様</div>
+    <div class="seg blind-seg" id="blindPatterns">
+      <button data-p="solid" class="on">無地</button>
+      <button data-p="stripe">しま</button>
+      <button data-p="dot">ドット</button>
+      <button data-p="check">チェック</button>
+    </div>
+    <div class="row"><button class="ok" id="blindOk" style="flex:1">閉じる</button></div>
+  </div>
+
+  <div class="lasso-bar" id="lassoBar">
+    <button id="lassoMoveHint">ドラッグで移動・角で拡大縮小</button>
+    <button id="lassoEdit" hidden>編集</button>
+    <button id="lassoCrop" hidden>切り抜き</button>
+    <button id="lassoCopy">コピー</button>
+    <button class="danger" id="lassoDelete">削除</button>
+    <button id="lassoDone">完了</button>
+  </div>
+</div>
+
+<!-- ============ 画像トリミング画面 ============ -->
+<div class="crop-screen" id="cropScreen">
+  <div class="crop-head">
+    <button class="crop-cancel" id="cropCancel">キャンセル</button>
+    <span class="crop-title">切り抜き</span>
+    <button class="crop-ok" id="cropApply">適用</button>
+  </div>
+  <div class="crop-stage" id="cropStage">
+    <canvas id="cropCanvas"></canvas>
+  </div>
+  <div class="crop-tools">
+    <div class="crop-shape" id="cropShape">
+      <button data-shape="rect" class="on">□ 四角</button>
+      <button data-shape="round">▢ 角丸</button>
+      <button data-shape="ellipse">○ 丸</button>
+    </div>
+    <div class="crop-hint">枠の中をドラッグで移動、角をドラッグでサイズ変更</div>
+  </div>
+</div>
+
+<!-- ============ 黒板(共通) ============ -->
+<div class="board-panel" id="boardPanel">
+  <div class="board-head">
+    <h2>共有黒板 — 全ノート共通メモ</h2>
+    <button class="close" id="boardClose" aria-label="黒板を閉じる">▴</button>
+  </div>
+  <canvas id="boardCanvas"></canvas>
+  <div class="board-foot">
+    <button class="chalk-eraser" id="chalkEraser">黒板消し</button>
+    <div class="board-timer">
+      <input type="number" id="timerMin" min="1" max="180" value="25" aria-label="タイマー分数">
+      <span style="font-size:11px">分</span>
+      <span class="disp" id="timerDisp">25:00</span>
+      <button id="timerBtn">スタート</button>
+    </div>
+  </div>
+  <button class="board-tab board-tab-close" id="boardCloseTab" aria-label="黒板をしまう">黒板をしまう ▴</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="storage.js"></script>
+<script src="note.js"></script>
+</body>
+</html>
